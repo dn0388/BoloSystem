@@ -3,12 +3,12 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package br.com.bolosystem.view;
-import br.com.bolosystem.dao.ClienteDAO;
+import br.com.bolosystem.service.ClienteService;
 import br.com.bolosystem.model.Cliente;
 import javax.swing.JOptionPane;
 
 public class CadastroClientes extends javax.swing.JFrame {
-    
+    private final ClienteService clienteService = new ClienteService();
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(CadastroClientes.class.getName());
 
     /**
@@ -146,20 +146,45 @@ public class CadastroClientes extends javax.swing.JFrame {
     }//GEN-LAST:event_jTextField1ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        Cliente cliente = new Cliente();
+        try {
+    Cliente cliente = new Cliente();
 
-cliente.setNome(jTextField1.getText());
-cliente.setContato(jTextField2.getText());
-cliente.setCpf(jTextField3.getText());
-cliente.setEndereco(jTextField4.getText());
-cliente.setPontoReferencia(jTextField5.getText());
+    cliente.setNome(jTextField1.getText().trim());
+    cliente.setContato(jTextField2.getText().trim());
+    cliente.setCpf(jTextField3.getText().trim());
+    cliente.setEndereco(jTextField4.getText().trim());
+    cliente.setPontoReferencia(jTextField5.getText().trim());
 
-ClienteDAO dao = new ClienteDAO();
-dao.cadastrar(cliente);
+    clienteService.cadastrar(cliente);
 
-JOptionPane.showMessageDialog(this, "Cliente cadastrado com sucesso!");
+    JOptionPane.showMessageDialog(
+        this,
+        "Cliente cadastrado com sucesso!",
+        "Sucesso",
+        JOptionPane.INFORMATION_MESSAGE
+    );
 
-      
+    jTextField1.setText("");
+    jTextField2.setText("");
+    jTextField3.setText("");
+    jTextField4.setText("");
+    jTextField5.setText("");
+
+} catch (IllegalArgumentException e) {
+    JOptionPane.showMessageDialog(
+        this,
+        e.getMessage(),
+        "Dados inválidos",
+        JOptionPane.WARNING_MESSAGE
+    );
+} catch (RuntimeException e) {
+    JOptionPane.showMessageDialog(
+        this,
+        "Não foi possível cadastrar o cliente. Verifique a conexão com o banco.",
+        "Erro",
+        JOptionPane.ERROR_MESSAGE
+    );
+}
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed

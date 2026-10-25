@@ -3,11 +3,12 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package br.com.bolosystem.view;
-import br.com.bolosystem.dao.UsuarioDAO;
+import br.com.bolosystem.service.AutenticacaoService;
 import javax.swing.JOptionPane;
 
 public class LoginTela extends javax.swing.JFrame {
-    
+    private final AutenticacaoService autenticacaoService =
+        new AutenticacaoService();
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(LoginTela.class.getName());
 
     /**
@@ -124,22 +125,11 @@ public class LoginTela extends javax.swing.JFrame {
     }//GEN-LAST:event_jTextField2ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-  
-    String login = usuario.getText();
-    String senhaDigitada = new String(senha.getPassword());
 
-    UsuarioDAO dao = new UsuarioDAO();
-
-    if (dao.validarLogin(login, senhaDigitada)) {
-        new MenuTela().setVisible(true);
-        this.dispose();
-    } else {
-        JOptionPane.showMessageDialog(this,
-                "Usuário ou senha inválidos!",
-                "Erro de Login",
-                JOptionPane.ERROR_MESSAGE);
-    }
-
+    boolean autenticado = autenticacaoService.autenticar(
+        usuario.getText().trim(),
+        new String(senha.getPassword())
+);
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void usuarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_usuarioActionPerformed

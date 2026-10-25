@@ -3,37 +3,45 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package br.com.bolosystem.view;
-import br.com.bolosystem.dao.ClienteDAO;
 import javax.swing.JOptionPane;
-import br.com.bolosystem.dao.PedidoDAO;
 import br.com.bolosystem.model.ItemPedido;
 import br.com.bolosystem.model.Pedido;
 import br.com.bolosystem.model.Produto;
+import br.com.bolosystem.service.ClienteService;
 import br.com.bolosystem.service.PedidoService;
-import java.util.ArrayList;
-import java.util.List;
+import br.com.bolosystem.service.ProdutoService;
+
 public class CadastroPedidoTela extends javax.swing.JFrame {
-    
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(CadastroPedidoTela.class.getName());
 
-    /**
-     * Creates new form CadastroPedidoTela
-     */
-    public CadastroPedidoTela() {
-    initComponents();
-    carregarProdutos();
-}
- private void carregarProdutos() {
+    private final PedidoService pedidoService = new PedidoService();
+    private final ClienteService clienteService = new ClienteService();
+    private final ProdutoService produtoService = new ProdutoService();
 
-    jComboBox1.removeAllItems();
+    private static final java.util.logging.Logger logger =
+            java.util.logging.Logger.getLogger(
+                    CadastroPedidoTela.class.getName()
+            );
 
-    br.com.bolosystem.dao.ProdutoDAO dao =
-            new br.com.bolosystem.dao.ProdutoDAO();
+ 
+private void carregarProdutos() {
+    try {
+        jComboBox1.removeAllItems();
 
-    for (Produto p : dao.listar()) {
-        jComboBox1.addItem(p);
+        for (Produto produto : produtoService.listar()) {
+            jComboBox1.addItem(produto);
+        }
+
+    } catch (RuntimeException e) {
+        JOptionPane.showMessageDialog(
+            this,
+            "Não foi possível carregar os produtos. "
+                    + "Verifique a conexão com o banco de dados.",
+            "Erro",
+            JOptionPane.ERROR_MESSAGE
+        );
     }
 }
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -173,62 +181,85 @@ public class CadastroPedidoTela extends javax.swing.JFrame {
     }//GEN-LAST:event_jTextField2ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-try {
 
+try {
     String nomeCliente = jTextField1.getText().trim();
 
     if (nomeCliente.isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Digite o nome do cliente!");
+        JOptionPane.showMessageDialog(
+            this,
+            "Digite o nome do cliente!"
+        );
         return;
     }
 
-    ClienteDAO clienteDAO = new ClienteDAO();
-    int clienteId = clienteDAO.buscarIdPorNome(nomeCliente);
+    int clienteId = clienteService.buscarIdPorNome(nomeCliente);
 
-    if (clienteId == -1) {
-        JOptionPane.showMessageDialog(this, "Cliente não encontrado!");
+    if (clienteId <= 0) {
+        JOptionPane.showMessageDialog(
+            this,
+            "Cliente não encontrado!"
+        );
         return;
     }
 
     int quantidade = (int) jSpinner1.getValue();
 
     if (quantidade <= 0) {
-        JOptionPane.showMessageDialog(this, "Quantidade deve ser maior que zero!");
+        JOptionPane.showMessageDialog(
+            this,
+            "A quantidade deve ser maior que zero!"
+        );
         return;
     }
 
     Produto produto = (Produto) jComboBox1.getSelectedItem();
 
     if (produto == null) {
-        JOptionPane.showMessageDialog(this, "Selecione um produto!");
+        JOptionPane.showMessageDialog(
+            this,
+            "Selecione um produto!"
+        );
         return;
     }
 
-    double subtotal = produto.getPreco() * quantidade;
-
-    jTextField2.setText(String.valueOf(subtotal));
-
-    // Criar item do pedido
     ItemPedido item = new ItemPedido();
     item.setProdutoId(produto.getId());
     item.setQuantidade(quantidade);
-    item.setSubtotal(subtotal);
 
-    // Criar pedido corretamente
     Pedido pedido = new Pedido(clienteId);
     pedido.adicionarItem(item);
-    PedidoService pedidoService = new PedidoService();
-    pedidoService.validar(pedido);
-    // Salvar pedido
-    PedidoDAO pedidoDAO = new PedidoDAO();
-    pedidoDAO.salvar(pedido);
 
-    JOptionPane.showMessageDialog(this, "Pedido salvo com sucesso!");
+    // O serviço valida, calcula os subtotais e salva o pedido.
+    pedidoService.cadastrar(pedido);
 
-} catch (Exception e) {
-    JOptionPane.showMessageDialog(this, "Erro ao salvar pedido: " + e.getMessage());
-    e.printStackTrace();
+    double total = pedidoService.calcularTotal(pedido);
+    jTextField2.setText(String.valueOf(total));
+
+    JOptionPane.showMessageDialog(
+        this,
+        "Pedido salvo com sucesso!\nTotal: R$ "
+                + String.format("%.2f", total)
+    );
+
+} catch (IllegalArgumentException e) {
+    JOptionPane.showMessageDialog(
+        this,
+        e.getMessage(),
+        "Dados inválidos",
+        JOptionPane.WARNING_MESSAGE
+    );
+
+} catch (RuntimeException e) {
+    JOptionPane.showMessageDialog(
+        this,
+        "Erro ao salvar o pedido. Verifique a conexão com o banco.\n"
+                + e.getMessage(),
+        "Erro",
+        JOptionPane.ERROR_MESSAGE
+    );
 }
+
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed

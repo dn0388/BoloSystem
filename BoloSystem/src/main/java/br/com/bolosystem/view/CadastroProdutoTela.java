@@ -4,10 +4,10 @@
  */
 package br.com.bolosystem.view;
 import javax.swing.JOptionPane;
-import br.com.bolosystem.dao.ProdutoDAO;
+import br.com.bolosystem.service.ProdutoService;
 import br.com.bolosystem.model.Produto;
 public class CadastroProdutoTela extends javax.swing.JFrame {
-    
+    private final ProdutoService produtoService = new ProdutoService();
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(CadastroProdutoTela.class.getName());
 
     /**
@@ -162,40 +162,14 @@ public class CadastroProdutoTela extends javax.swing.JFrame {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
                                     
     String nome = jTextField1.getText().trim();
-    String precoTexto = jTextField2.getText().trim();
-    String descricao = jTextArea1.getText().trim();
+String precoTexto = jTextField2.getText().trim();
 
-    if (nome.isEmpty() || precoTexto.isEmpty()) {
-        JOptionPane.showMessageDialog(
-            this,
-            "Preencha todos os campos obrigatórios!",
-            "Erro",
-            JOptionPane.WARNING_MESSAGE
-        );
-        return;
-    }
-
-    double preco;
-
-    try {
-        preco = Double.parseDouble(precoTexto);
-    } catch (NumberFormatException e) {
-        JOptionPane.showMessageDialog(
-            this,
-            "Preço inválido!",
-            "Erro",
-            JOptionPane.ERROR_MESSAGE
-        );
-        return;
-    }
-
-    
+try {
     Produto produto = new Produto();
     produto.setNome(nome);
-    produto.setPreco(preco);
+    produto.setPreco(Double.parseDouble(precoTexto));
 
-    ProdutoDAO dao = new ProdutoDAO();
-    dao.inserir(produto);
+    produtoService.cadastrar(produto);
 
     JOptionPane.showMessageDialog(
         this,
@@ -204,10 +178,34 @@ public class CadastroProdutoTela extends javax.swing.JFrame {
         JOptionPane.INFORMATION_MESSAGE
     );
 
-    // Limpar campos
     jTextField1.setText("");
     jTextField2.setText("");
     jTextArea1.setText("");
+
+} catch (NumberFormatException e) {
+    JOptionPane.showMessageDialog(
+        this,
+        "Informe um preço numérico válido.",
+        "Erro",
+        JOptionPane.ERROR_MESSAGE
+    );
+} catch (IllegalArgumentException e) {
+    JOptionPane.showMessageDialog(
+        this,
+        e.getMessage(),
+        "Dados inválidos",
+        JOptionPane.WARNING_MESSAGE
+    );
+} catch (RuntimeException e) {
+    JOptionPane.showMessageDialog(
+        this,
+        "Não foi possível salvar o produto. Verifique a conexão com o banco.",
+        "Erro",
+        JOptionPane.ERROR_MESSAGE
+    );
+}
+
+
 
     }//GEN-LAST:event_jButton1ActionPerformed
 

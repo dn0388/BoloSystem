@@ -1,7 +1,6 @@
 package br.com.bolosystemweb.web;
-
-import br.com.bolosystem.dao.ProdutoDAO;
 import br.com.bolosystem.model.Produto;
+import br.com.bolosystem.service.ProdutoService;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,22 +9,70 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/produtos")
 public class ProdutoRestController {
-    private final ProdutoDAO dao = new ProdutoDAO();
-    @GetMapping public List<Produto> listar() { return dao.listar(); }
-    @GetMapping("/{id}") public ResponseEntity<Produto> buscar(@PathVariable int id) {
-        Produto p = id > 0 ? dao.buscarPorId(id) : null; return p == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(p);
+
+    private final ProdutoService service = new ProdutoService();
+
+    @GetMapping
+    public List<Produto> listar() {
+        return service.listar();
     }
-    @PostMapping public ResponseEntity<?> cadastrar(@RequestBody Produto p) {
-        if (!valido(p)) return ResponseEntity.badRequest().body("Informe nome e preço não negativo.");
-        dao.inserir(p); return ResponseEntity.status(HttpStatus.CREATED).body("Produto cadastrado com sucesso.");
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Produto> buscar(@PathVariable int id) {
+        if (id <= 0) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        Produto produto = service.buscarPorId(id);
+
+        if (produto == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(produto);
     }
-    @PutMapping("/{id}") public ResponseEntity<?> atualizar(@PathVariable int id, @RequestBody Produto p) {
-        if (id <= 0 || !valido(p)) return ResponseEntity.badRequest().body("Dados inválidos.");
-        return dao.atualizar(id, p) ? ResponseEntity.ok("Produto atualizado.") : ResponseEntity.notFound().build();
+
+    @PostMapping
+    public ResponseEntity<?> cadastrar(@RequestBody Produto produto) {
+        try {
+            service.cadastrar(produto);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body("Produto cadastrado com sucesso.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
-    @DeleteMapping("/{id}") public ResponseEntity<?> excluir(@PathVariable int id) {
-        if (id <= 0) return ResponseEntity.badRequest().build();
-        return dao.excluir(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> atualizar(
+            @PathVariable int id,
+            @RequestBody Produto produto) {
+        try {
+            boolean atualizado = service.atualizar(id, produto);
+
+            if (!atualizado) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.ok("Produto atualizado com sucesso.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
-    private boolean valido(Produto p) { return p != null && p.getNome() != null && !p.getNome().isBlank() && p.getPreco() >= 0 && Double.isFinite(p.getPreco()); }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> excluir(@PathVariable int id) {
+        try {
+            boolean excluido = service.excluir(id);
+
+            if (!excluido) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }
+
